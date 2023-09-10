@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,9 +71,19 @@ for label, coords in tas_data['coords'].items():
     df.loc[mask, 'Classification'] = label
 
 print(df)
+
+# 获取当前 Python 文件所在目录
+# Get the current directory of the Python file
+current_dir = os.getcwd()
+
+# 构造结果 CSV 文件的完整路径
+# Construct the full path of the result CSV file
+result_file_path = os.path.join(current_dir, 'Geochemistry_result.csv')
+
 # 保存结果到CSV文件
 # Save results to CSV file
 df.to_csv('Geochemistry_result.csv', index=False)
+
 # 显示图形
 # Show figure
 plt.show()
