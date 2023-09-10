@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 import urllib.request
+from matplotlib.path import Path
 
 # 读取数据文件
 url = 'https://raw.githubusercontent.com/GeoPyTool/GeoPyTool/master/DataFileSamples/Geochemistry.csv'
@@ -48,5 +49,18 @@ for label, coords in tas_data['coords'].items():
     y_center = sum(y_coords) / len(y_coords)
     axs.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3))
 
+# 根据每个数据点在TAS图解中的位置添加分类结果
+x_col = 'SiO2(wt%)'
+y_col = 'Na2O(wt%) + K2O(wt%)'
+points = df[[x_col, y_col]].values
+df['Classification'] = ''
+for label, coords in tas_data['coords'].items():
+    path = Path(coords)
+    mask = path.contains_points(points)
+    df.loc[mask, 'Classification'] = label
+
+print(df)
+# 保存结果到CSV文件
+df.to_csv('Geochemistry_result.csv', index=False)
 # 显示图形
 plt.show()
