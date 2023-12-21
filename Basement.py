@@ -211,8 +211,10 @@ class AppWindow(QMainWindow):
         # File menu
         file_menu = menu_bar.addMenu('File')
 
-        open_csv_action = self.create_action('Open File', self.open_file)
-        file_menu.addAction(open_csv_action)
+        open_file_action = self.create_action('Open File', self.open_file)
+        save_file_action = self.create_action('Save File', self.save_file)
+        file_menu.addAction(open_file_action)
+        file_menu.addAction(save_file_action)
 
         # Result menu
         result_menu = menu_bar.addMenu('Result')
@@ -240,6 +242,8 @@ class AppWindow(QMainWindow):
         self.table_view.setObjectName('tableView')
         self.table_view.setSortingEnabled(True)
 
+        self.open_button = QPushButton('&Open')
+        self.open_button.clicked.connect(self.open_file)
         self.save_button = QPushButton('&Save')
         self.save_button.clicked.connect(self.save_file)
 
@@ -248,7 +252,7 @@ class AppWindow(QMainWindow):
         self.vbox.addWidget(self.table_view)
         self.hbox = QHBoxLayout()
 
-        for w in [self.save_button,]:
+        for w in [self.open_button,self.save_button,]:
             self.hbox.addWidget(w)
 
         self.vbox.addLayout(self.hbox)
@@ -281,11 +285,11 @@ class AppWindow(QMainWindow):
                                                           './',
                                                           'CSV Files (*.csv);;Excel Files (*.xlsx)')  
         if ('csv' in DataFileOutput):
-            self.df.to_csv(DataFileOutput, sep=',', encoding='utf-8')
+            self.df.to_csv(DataFileOutput, sep=',', encoding='utf-8',index=False)
             QMessageBox.information(self, "File Saved", f"Your file saved as: {DataFileOutput}.")
 
         elif ('xls' in DataFileOutput):
-            self.df.to_excel(DataFileOutput)
+            self.df.to_excel(DataFileOutput,index=False)
             QMessageBox.information(self, "File Saved", f"Your file saved as: {DataFileOutput}.")
         else:
             pass
