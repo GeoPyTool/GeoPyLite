@@ -41,9 +41,11 @@ class TAS(toga.App):
         self.label_list =['test1','test2']
         self.color_list = ['red','blue']
 
-        main_box = toga.Box(style=Pack(direction=COLUMN))
-        horizontal_box = toga.Box(style=Pack(direction=ROW, padding=5))
-        horizontal_box2 = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.main_box = toga.Box(style=Pack(direction=COLUMN))
+        self.horizontal_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.horizontal_box2 = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.left_box  = toga.Box(style=Pack(direction=ROW, padding=5))
+        self.right_box = toga.Box(style=Pack(direction=ROW, padding=5))
 
 
         self.column_names = ['Label', 'Color', 'SiO2', 'Na2O', 'K2O']
@@ -56,18 +58,20 @@ class TAS(toga.App):
         self.chart = toga_chart.Chart(style=Pack(flex=1, width=600, height=450), on_draw=self.draw_chart)
         self.label_status = toga.Label('Ready', style=Pack(padding=5))
         
-        horizontal_box.add(button_open)
-        # horizontal_box.add(button_load)
-        horizontal_box.add(button_plot)
-        horizontal_box.add(button_save)
-        horizontal_box2.add(self.table_view)
-        horizontal_box2.add(self.chart)
-        main_box.add(horizontal_box)
-        main_box.add(horizontal_box2)
-        main_box.add(self.label_status)
+        self.horizontal_box.add(button_open)
+        # self.horizontal_box.add(button_load)
+        self.horizontal_box.add(button_plot)
+        self.horizontal_box.add(button_save)
+        self.left_box.add(self.table_view)
+        self.right_box.add(self.chart)
+        self.horizontal_box2.add(self.left_box)
+        self.horizontal_box2.add(self.right_box)
+        self.main_box.add(self.horizontal_box)
+        self.main_box.add(self.horizontal_box2)
+        self.main_box.add(self.label_status)
 
         self.main_window = toga.MainWindow(title=self.formal_name)
-        self.main_window.content = main_box
+        self.main_window.content = self.main_box
         self.main_window.show()
     
     async def open_data(self, widget):
@@ -84,6 +88,9 @@ class TAS(toga.App):
                     df = pd.read_excel(fname)
                 
                 self.data =  df[[col for col in df.columns if any(name in col for name in self.column_names)]]
+                self.left_box.remove(self.table_view)
+                self.table_view = toga.Table(headings=self.column_names, style=Pack(flex=1, alignment='center', text_align='center', width=250, height=450))
+                self.left_box.add(self.table_view)    
                 self.table_view.data = self.data.values.tolist()
                 self.raw_df = df
                 
