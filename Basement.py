@@ -20,7 +20,6 @@ class GrowingTextEdit(QTextEdit):
     def __init__(self, *args, **kwargs):
         super(GrowingTextEdit, self).__init__(*args, **kwargs)
         self.document().contentsChanged.connect(self.sizeChange)
-
         self.heightMin = 0
         self.heightMax = 8
 
@@ -75,16 +74,6 @@ class PandasModel(QAbstractTableModel):
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
 
-    '''
-    def setData(self, index, value, role=Qt.EditRole):
-        row = index.row()
-        col = index.column()
-        name = self._struct[col]['name']
-        self._data[row][name] = value
-        self.emit(SIGNAL('dataChanged()'))
-        return True
-    '''
-
     def setData(self, index, value, role=Qt.EditRole):
         row = self._df.index[index.row()]
         col = self._df.columns[index.column()]
@@ -127,19 +116,6 @@ class PandasModel(QAbstractTableModel):
             pass
 
         self.layoutChanged.emit()
-
-class CustomQTableView(QTableView):
-    df = pd.DataFrame()
-
-    def __init__(self, *args):
-        super().__init__(*args)
-
-        self.resize(800, 600)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers |
-                             QAbstractItemView.DoubleClicked)
-
-    def keyPressEvent(self, event):  # Reimplement the event here
-        return
 
 class PoweredQTableView(QTableView):
     def __init__(self, *args):
@@ -188,7 +164,6 @@ class PoweredQTableView(QTableView):
         files = [(u.toLocalFile()) for u in event.mimeData().urls()]
         for f in files:
             print('Drop')
-
 
 class AppWindow(QMainWindow):
 
