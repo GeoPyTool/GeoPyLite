@@ -27,6 +27,7 @@ requires = [
     "pandas",
     "scipy",
     "toga_chart",
+    "urllib",
 ]
 test_requires = [
     "pytest",

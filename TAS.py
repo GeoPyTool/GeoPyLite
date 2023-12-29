@@ -40,7 +40,7 @@ for i, (x, y) in enumerate(elements):
 
 # 读取TAS图解边界数据
 # Read TAS diagram boundary data
-with urllib.request.urlopen('https://raw.githubusercontent.com/cycleuser/GeochemDataFormat/main/Known%20Coords/TAS.json') as url:
+with urllib.request.urlopen('https://raw.githubusercontent.com/GeoPyTool/GeochemDataFormat/main/Known%20Coords/TAS.json') as url:
     tas_data = json.loads(url.read().decode())
 
 # 绘制TAS图解边界线条
