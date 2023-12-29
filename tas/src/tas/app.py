@@ -22,6 +22,7 @@ class TAS(toga.App):
         We then create a main window (with a name matching the app), and
         show the main window.
         """
+        self.raw_df = pd.DataFrame()
         self.data = pd.DataFrame()
         self.cord = {}
         self.x_list = [0,0]
@@ -51,7 +52,7 @@ class TAS(toga.App):
         main_box.add(self.chart)
         main_box.add(self.label_status)
 
-        self.main_window = toga.MainWindow(title=self.formal_name, size=(300, 600))
+        self.main_window = toga.MainWindow(title=self.formal_name, size=(400, 600))
         self.main_window.content = main_box
         self.main_window.show()
     
@@ -70,6 +71,7 @@ class TAS(toga.App):
                 
                 self.data =  df[[col for col in df.columns if any(name in col for name in self.column_names)]]
                 self.table_view.data = self.data.values.tolist()
+                self.raw_df = df
                 
                 self.label_status.text = "Data file opened!"
                 
@@ -83,7 +85,7 @@ class TAS(toga.App):
     async def load_cord(self, widget):
         try:
             fname = await self.main_window.open_file_dialog(
-                "Load cord file", file_types=["json"]
+                "Load Json cord", file_types=["json"]
             )
             print(type(fname),fname.__str__())
             if fname is not None:
@@ -107,6 +109,25 @@ class TAS(toga.App):
         
         self.ax = self.fig.add_subplot(1, 1, 1)
 
+        # Replace non-numeric characters outside the first row and first column and Label, Color, Marker, Size, Width, Style, Alpha with 0
+        cols_to_exclude = ['Label', 'Color', 'Marker', 'Size', 'Width', 'Style', 'Alpha']
+        cols_to_include = self.raw_df.columns.difference(cols_to_exclude)
+        self.raw_df[cols_to_include] = self.raw_df[cols_to_include].apply(pd.to_numeric, errors='coerce').fillna(0)
+
+        # 计算'Na2O(wt%)'和'K2O(wt%)'的和
+        # Calculate the sum of 'Na2O(wt%)' and 'K2O(wt%)'
+        self.raw_df['Na2O(wt%) + K2O(wt%)'] = self.raw_df['Na2O(wt%)'] + self.raw_df['K2O(wt%)']
+
+        elements = [('SiO2(wt%)', 'Na2O(wt%) + K2O(wt%)')]
+        
+        # 绘制每个元素对
+        # Plot each element pair
+        for i, (x, y) in enumerate(elements):
+            for label, group_df in self.raw_df.groupby('Label'):
+                self.ax.scatter(group_df[x], group_df[y], c=group_df['Color'], marker=group_df['Marker'].iloc[0], s=group_df['Size'], alpha=group_df['Alpha'], label=label)
+            self.ax.set_xlabel(x)
+            self.ax.set_ylabel(y)
+            self.ax.legend()
 
 
 
