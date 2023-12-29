@@ -147,27 +147,11 @@ class TAS(toga.App):
             y_center = sum(y_coords) / len(y_coords)
             self.ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3))
 
-
-        num_bins = 50
-        MU = 100  # mean of distribution
-        SIGMA = 15  # standard deviation of distribution
-        x = MU + SIGMA * np.random.randn(437)
-        n, bins, patches = self.ax.hist(x, num_bins, density=1)
-
-        # add a 'best fit' line
-        y = (1 / (np.sqrt(2 * np.pi) * SIGMA)) * np.exp(
-            -0.5 * (1 / SIGMA * (bins - MU)) ** 2
-        )
-
-
-
-        self.ax.plot(bins, y, "--")
-
         self.ax.set_xlabel(r"$SiO2$")
         self.ax.set_ylabel(r"$Na2O+K2O$")
         self.ax.set_title(r"Extended TAS Diagram")
-        self.ax.set_xlim(38,80)
-        self.ax.set_ylim(-0.5,18)
+        self.ax.set_xlim(35,80)
+        self.ax.set_ylim(0,17.647826086956513)
         self.chart._draw(figure=self.fig)
         
     def save_plot(self, widget):
