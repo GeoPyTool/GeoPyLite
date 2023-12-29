@@ -27,6 +27,7 @@ requires = [
     "pandas",
     "scipy",
     "toga_chart",
+    "scikit-learn",
 ]
 test_requires = [
     "pytest",
