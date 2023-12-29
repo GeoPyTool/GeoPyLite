@@ -39,8 +39,8 @@ class TAS(toga.App):
         button_load = toga.Button('Load', style=Pack(flex=1), on_press=self.load_cord)
         button_plot = toga.Button('Plot', style=Pack(flex=1), on_press=self.plot_data)
         button_save = toga.Button('Save', style=Pack(flex=1), on_press=self.save_plot)
-        self.table_view = toga.Table(headings= self.column_names, style=Pack(flex=1,alignment='center',text_align='center'))
-        self.chart = toga_chart.Chart(style=Pack(flex=1), on_draw=self.draw_chart)
+        self.table_view = toga.Table(headings=self.column_names, style=Pack(flex=1, alignment='center', text_align='center', width=400))
+        self.chart = toga_chart.Chart(style=Pack(flex=1, width=400, height=300), on_draw=self.draw_chart)
         self.label_status = toga.Label('Ready', style=Pack(padding=5))
         
         horizontal_box.add(button_open)
