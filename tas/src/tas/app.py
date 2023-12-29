@@ -43,6 +43,8 @@ class TAS(toga.App):
 
         main_box = toga.Box(style=Pack(direction=COLUMN))
         horizontal_box = toga.Box(style=Pack(direction=ROW, padding=5))
+        horizontal_box2 = toga.Box(style=Pack(direction=ROW, padding=5))
+
 
         self.column_names = ['Label', 'Color', 'SiO2', 'Na2O', 'K2O']
 
@@ -50,20 +52,21 @@ class TAS(toga.App):
         # button_load = toga.Button('Load', style=Pack(flex=1), on_press=self.load_cord)
         button_plot = toga.Button('Plot', style=Pack(flex=1), on_press=self.plot_data)
         button_save = toga.Button('Save', style=Pack(flex=1), on_press=self.save_plot)
-        self.table_view = toga.Table(headings=self.column_names, style=Pack(flex=1, alignment='center', text_align='center', width=400))
-        self.chart = toga_chart.Chart(style=Pack(flex=1, width=400, height=300), on_draw=self.draw_chart)
+        self.table_view = toga.Table(headings=self.column_names, style=Pack(flex=1, alignment='center', text_align='center', width=250, height=450))
+        self.chart = toga_chart.Chart(style=Pack(flex=1, width=600, height=450), on_draw=self.draw_chart)
         self.label_status = toga.Label('Ready', style=Pack(padding=5))
         
         horizontal_box.add(button_open)
         # horizontal_box.add(button_load)
         horizontal_box.add(button_plot)
         horizontal_box.add(button_save)
+        horizontal_box2.add(self.table_view)
+        horizontal_box2.add(self.chart)
         main_box.add(horizontal_box)
-        main_box.add(self.table_view)
-        main_box.add(self.chart)
+        main_box.add(horizontal_box2)
         main_box.add(self.label_status)
 
-        self.main_window = toga.MainWindow(title=self.formal_name, size=(400, 600))
+        self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
         self.main_window.show()
     
@@ -111,10 +114,10 @@ class TAS(toga.App):
         for i, (x, y) in enumerate(elements):
             for label, group_df in self.raw_df.groupby('Label'):
                 self.ax.scatter(group_df[x], group_df[y], c=group_df['Color'], marker=group_df['Marker'].iloc[0], s=group_df['Size'], alpha=group_df['Alpha'], label=label)
-            self.ax.set_xlabel(x, fontsize=7)
-            self.ax.set_ylabel(y, fontsize=7)
-            self.ax.tick_params(axis='both', labelsize=7)
-            self.ax.legend(fontsize=7)
+            self.ax.set_xlabel(x, fontsize=9)
+            self.ax.set_ylabel(y, fontsize=9)
+            self.ax.tick_params(axis='both', labelsize=9)
+            self.ax.legend(fontsize=9)
 
         # 绘制TAS图解边界线条
         # Draw TAS diagram boundary lines
@@ -130,11 +133,11 @@ class TAS(toga.App):
             y_coords = [point[1] for point in coords]
             x_center = sum(x_coords) / len(x_coords)
             y_center = sum(y_coords) / len(y_coords)
-            self.ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=7)
+            self.ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=9)
 
-        self.ax.set_xlabel(r"$SiO2$", fontsize=7)
-        self.ax.set_ylabel(r"$Na2O+K2O$", fontsize=7)
-        self.ax.set_title(r"Extended TAS Diagram", fontsize=7)
+        self.ax.set_xlabel(r"$SiO2$", fontsize=9)
+        self.ax.set_ylabel(r"$Na2O+K2O$", fontsize=9)
+        self.ax.set_title(r"Extended TAS Diagram", fontsize=9)
         self.ax.set_xlim(35,80)
         self.ax.set_ylim(0,17.647826086956513)
         self.chart._draw(figure=self.fig)
