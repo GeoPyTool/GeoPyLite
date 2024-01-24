@@ -5,6 +5,11 @@ import json
 import math
 import os
 import platform
+import pickle 
+import io
+import matplotlib.pyplot as plt
+from PIL import Image
+import tempfile
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -16,7 +21,6 @@ import toga
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 import toga_chart
-
 
 class TAS(toga.App):
 
@@ -129,7 +133,21 @@ class TAS(toga.App):
 
     
     def plot_data(self, widget):        
-        self.ax = self.fig.add_subplot(1, 1, 1)
+        # Load the Figure
+        with open('TAS_Base_VOL.pkl', 'rb') as f:
+            fig = pickle.load(f)
+            print('fig loaded')
+
+        self.fig = fig
+        # Get the Axes
+        if self.fig.axes:
+            self.ax = self.fig.axes[0]
+        else:
+            self.ax = self.fig.add_subplot(1, 1, 1)  # Add a new Axes if the Figure does not have any
+
+        # Now you can plot on `ax`
+        # Plot a red dot at (40, 8)
+        self.ax.scatter(40, 8, color='red')
         # Replace non-numeric characters outside the first row and first column and Label, Color, Marker, Size, Width, Style, Alpha with 0
         cols_to_exclude = ['Label', 'Color', 'Marker', 'Size', 'Width', 'Style', 'Alpha']
         cols_to_include = self.raw_df.columns.difference(cols_to_exclude)
