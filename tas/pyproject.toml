@@ -2,7 +2,7 @@
 [tool.briefcase]
 project_name = "TAS"
 bundle = "com.geopytool"
-version = "1.1"
+version = "1.2"
 url = "https://github.com/GeoPyTool/GeoPyLite"
 license = "GNU General Public License v3 or later (GPLv3+)"
 author = "Freddy"
