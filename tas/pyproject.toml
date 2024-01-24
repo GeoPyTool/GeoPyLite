@@ -2,7 +2,7 @@
 [tool.briefcase]
 project_name = "TAS"
 bundle = "com.geopytool"
-version = "1.0"
+version = "1.1"
 url = "https://github.com/GeoPyTool/GeoPyLite"
 license = "GNU General Public License v3 or later (GPLv3+)"
 author = "Freddy"
@@ -20,13 +20,13 @@ sources = [
 test_sources = [
     "tests",
 ]
-
 requires = [
     "matplotlib",
     "numpy",
     "pandas",
     "scipy",
-    "toga_chart",
+    "toga",
+    "toga-chart",
     "scikit-learn",
 ]
 test_requires = [

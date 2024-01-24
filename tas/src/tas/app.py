@@ -54,11 +54,15 @@ class TAS(toga.App):
         # button_load = toga.Button('Load', style=Pack(flex=1), on_press=self.load_cord)
         button_plot = toga.Button('Plot', style=Pack(flex=1), on_press=self.plot_data)
         button_save = toga.Button('Save', style=Pack(flex=1), on_press=self.save_plot)
+        
+        button_clear= toga.Button('Clear', style=Pack(flex=1), on_press=self.clear_data)
+
         self.table_view = toga.Table(headings=['Data will be shown here'], style=Pack(flex=1, alignment='center', text_align='center', width=250, height=450))
         self.chart = toga_chart.Chart(style=Pack(flex=1, width=600, height=450), on_draw=self.draw_chart)
         self.label_status = toga.Label('Ready', style=Pack(padding=5))
         
         self.horizontal_box.add(button_open)
+        self.horizontal_box.add(button_clear)
         # self.horizontal_box.add(button_load)
         self.horizontal_box.add(button_plot)
         self.horizontal_box.add(button_save)
@@ -101,6 +105,21 @@ class TAS(toga.App):
                 self.label_status.text = "No data file selected!"
         except ValueError:
             self.label_status.text = "Open data file dialog was canceled"
+    
+    def clear_data(self, widget):
+        self.x_list = [0,0]
+        self.y_list = [1,1]
+        self.label_list =['test1','test2']
+        self.color_list = ['red','blue']
+        self.left_box.remove(self.table_view)
+        self.table_view = toga.Table(headings=['Data will be shown here'], style=Pack(flex=1, alignment='center', text_align='center', width=250, height=450))
+        self.left_box.add(self.table_view)
+        
+        self.right_box.remove(self.chart)
+        self.chart = toga_chart.Chart(style=Pack(flex=1, width=600, height=450), on_draw=self.draw_chart)        
+        self.right_box.add(self.chart)
+        
+        self.label_status = toga.Label('Ready', style=Pack(padding=5))
 
     
     def plot_data(self, widget):        
@@ -156,14 +175,19 @@ class TAS(toga.App):
         fname = "result.svg"
         try:
             save_path = await self.main_window.save_file_dialog(
-                "Save the Plot as SVG",
+                "Save the Plot",
                 suggested_filename=fname,
             )
             if save_path is not None:
-                self.label_status.text = f"SVG file saved as: {save_path}"
-                self.fig.savefig(save_path)
-            else:
-                self.label_status.text = "Save file dialog was canceled"
+                self.label_status.text = f"File saved as: {save_path}"
+                if str(save_path).lower().endswith('.png'):
+                    self.fig.savefig(save_path, dpi=600, format='png')
+                elif str(save_path).lower().endswith('.jpg'):
+                    self.fig.savefig(save_path, dpi=600, format='jpeg')
+                elif str(save_path).lower().endswith('.svg'):
+                    self.fig.savefig(save_path, format='svg')
+                else:
+                    self.label_status.text = "Unsupported file type"
 
         except ValueError:
             self.label_status.text = "Save file dialog was canceled"
