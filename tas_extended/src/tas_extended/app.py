@@ -36,7 +36,14 @@ import pandas as pd
 from PySide6.QtGui import QGuiApplication
 
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
+# 获取当前文件的绝对路径
+current_file_path = os.path.abspath(__file__)
 
+# 获取当前文件的目录
+current_directory = os.path.dirname(current_file_path)
+working_directory = os.path.dirname(current_file_path)
+# 改变当前工作目录
+os.chdir(current_directory)
 class PandasModel(QAbstractTableModel):
     def __init__(self, df=pd.DataFrame(), parent=None):
         QAbstractTableModel.__init__(self, parent=parent)
@@ -165,8 +172,8 @@ class AppForm(QMainWindow):
     def saveDataFile(self):
 
         DataFileOutput, ok2 = QFileDialog.getSaveFileName(self,
-                                                          '文件保存',
-                                                          'C:/' + self.FileName_Hint,
+                                                          'Save Data File',
+                                                          working_directory + self.FileName_Hint,
                                                           'CSV Files (*.csv);;Excel Files (*.xlsx)')  # 数据文件保存输出
 
         if "Label" in self.df.columns.values.tolist():
@@ -207,7 +214,7 @@ class TAS_Extended(QMainWindow):
         self.tag = 'VOL'
         self.setting = 'Withlines'
         self.color_setting = ''
-        pass
+        self.data_path=''
 
     def init_ui(self):
         self.setWindowTitle('TAS Extended')
@@ -246,16 +253,10 @@ class TAS_Extended(QMainWindow):
         toolbar.addWidget(spacer) # Add a separator
 
         # 在工具栏中添加一个Plot action
-        plot_action = QAction('Traditional Plot', self)
-        plot_action.setShortcut('Ctrl+T') # 设置快捷键为Ctrl+T
+        plot_action = QAction('Plot Data', self)
+        plot_action.setShortcut('Ctrl+P') # 设置快捷键为Ctrl+P
         plot_action.triggered.connect(self.plot_data)  # 连接到plot_data方法
         toolbar.addAction(plot_action)
-
-        # 在工具栏中添加一个Hyper action
-        hyper_action = QAction('Hyper Plot', self)
-        hyper_action.setShortcut('Ctrl+H') # 设置快捷键为Ctrl+H
-        hyper_action.triggered.connect(self.hyper_data)  # 连接到hyper_data方法
-        toolbar.addAction(hyper_action)
 
 
         toolbar.addWidget(spacer) # Add a separator before the first switch
@@ -362,12 +363,14 @@ class TAS_Extended(QMainWindow):
             self.Polygon_dict[type_label]=polygon
 
     def open_file(self):
+        global working_directory 
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open File', '', 'CSV Files (*.csv);;Excel Files (*.xls *.xlsx)')
         if file_name:
+            working_directory = os.path.dirname(file_name)+'/'
             if file_name.endswith('.csv'):
                 self.df = pd.read_csv(file_name)
             elif file_name.endswith(('.xls', '.xlsx')):
-                self.df = pd.read_excel(file_name)
+                self.df = pd.read_excel(file_name)        
             
             
             model = PandasModel(self.df)
@@ -383,94 +386,8 @@ class TAS_Extended(QMainWindow):
         self.canvas.figure.clear()
         self.canvas.draw()
 
-    
+
     def plot_data(self):
-        self.canvas.figure.clear()
-        ax = self.canvas.figure.subplots()
-        if self.df.empty:
-            pass
-        else:
-            # 获取当前文件的绝对路径
-            current_file_path = os.path.abspath(__file__)
-
-            # 获取当前文件的目录
-            current_directory = os.path.dirname(current_file_path)
-            # 改变当前工作目录
-            os.chdir(current_directory)
-
-            with open('tas_cord.json') as file:
-                cord = json.load(file)
-
-            # 绘制TAS图解边界线条
-            # Draw TAS diagram boundary lines
-            for line in cord['coords'].values():
-                x_coords = [point[0] for point in line]
-                y_coords = [point[1] for point in line]
-                ax.plot(x_coords, y_coords, color='black', linewidth=0.3)
-
-            # 在TAS图解中添加岩石种类标签
-            # Add rock type labels in TAS diagram
-            for label, coords in cord['coords'].items():
-                x_coords = [point[0] for point in coords]
-                y_coords = [point[1] for point in coords]
-                x_center = sum(x_coords) / len(x_coords)
-                y_center = sum(y_coords) / len(y_coords)
-                ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=6.5)
-
-
-            # 创建一个空的set
-            label_set = set()
-            try:
-                x = self.df['SiO2(wt%)']
-                y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
-                color = self.df['Color']
-                alpha = self.df['Alpha']
-                size = self.df['Size']
-                label = self.df['Label']
-
-                def plot_group(group):
-                    ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
-
-                # 创建一个新的DataFrame，包含所有需要的列
-                df = pd.DataFrame({
-                    'x': x,
-                    'y': y,
-                    'color': color,
-                    'alpha': alpha,
-                    'size': size,
-                    'label': label
-                })
-
-                # 按照'label'列进行分组，然后对每个组应用plot_group函数
-                df.groupby('label').apply(plot_group)
-
-                
-                # # 获取当前的视域范围
-                # xlim = ax.get_xlim()
-                # ylim = ax.get_ylim()
-                # # 计算在视域范围内的数据点的数量
-                # visible_points = self.df[(x>= xlim[0]) & 
-                #                         (x<= xlim[1]) & 
-                #                         (y >= ylim[0]) & 
-                #                         (y<= ylim[1])]
-                # num_visible_points = len(visible_points)
-                # # 在图上显示可见的数据点的数量
-                # ax.text(0.05, 0.95, f'Plotted points: {num_visible_points}', transform=ax.transAxes, verticalalignment='top')
-                
-            except KeyError:
-                pass
-            
-
-            ax.legend()
-            ax.set_xlabel(r"$SiO2$", fontsize=9)
-            ax.set_ylabel(r"$Na2O+K2O$", fontsize=9)
-            ax.set_title(r"Traditional TAS Diagram", fontsize=9)
-            ax.set_xlim(35,80)
-            ax.set_ylim(0,17.647826086956513)  
-            self.canvas.draw()
-
-
-    def hyper_data(self):
         if self.df.empty:
             pass
         else:
@@ -598,7 +515,7 @@ class TAS_Extended(QMainWindow):
             pass
         else:
             pass
-            self.hyper_data()
+            self.plot_data()
 
     def toggle_lines(self, checked):
         if not checked:
@@ -612,7 +529,7 @@ class TAS_Extended(QMainWindow):
             pass
         else:
             pass
-            self.hyper_data()
+            self.plot_data()
 
 
     def toggle_colors(self, checked):
@@ -627,11 +544,13 @@ class TAS_Extended(QMainWindow):
             pass
         else:
             pass
-            self.hyper_data()
+            self.plot_data()
 
 
     def save_figure(self):
-        file_name, _ = QFileDialog.getSaveFileName(self, 'Save Figure', '', 'SVG Files (*.svg);;PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg *.jpeg)')
+        file_name, _ = QFileDialog.getSaveFileName(self, 
+                                                   'Save Figure', 
+                                                    working_directory+ 'TAS', 'PNG Files (*.png);;JPEG Files (*.jpg *.jpeg);;SVG Files (*.svg);;PDF Files (*.pdf)')
         if file_name:
             try:
                 # Set dpi to 600 for bitmap formats
