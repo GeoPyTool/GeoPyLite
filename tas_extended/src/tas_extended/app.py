@@ -12,11 +12,12 @@ import numpy as np
 
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.path import Path
-from matplotlib.patches import ConnectionStyle
+from matplotlib.patches import ConnectionStyle, Polygon
+from matplotlib.collections import PatchCollection
+
 
 try:
     from importlib import metadata as importlib_metadata
@@ -24,14 +25,15 @@ except ImportError:
     # Backwards compatibility - importlib.metadata was added in Python 3.8
     import importlib_metadata
 
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QGuiApplication
 from PySide6.QtWidgets import QAbstractItemView, QMainWindow, QApplication, QMenu, QToolBar, QFileDialog, QTableView, QVBoxLayout, QHBoxLayout, QWidget, QSlider,  QGroupBox , QLabel , QWidgetAction, QPushButton, QSizePolicy
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QVariantAnimation, Qt
+
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
-
+from PySide6.QtGui import QGuiApplication
 
 from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
 
@@ -109,10 +111,74 @@ class CustomQTableView(QTableView):
         super().__init__(*args)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers |
                              QAbstractItemView.DoubleClicked)
+        self.setSortingEnabled(True)
 
     def keyPressEvent(self, event):  # Reimplement the event here
         return
 
+    def contextMenuEvent(self, event):
+        contextMenu = QMenu(self)
+        copyAction = QAction("Copy", self)
+        contextMenu.addAction(copyAction)
+        copyAction.triggered.connect(self.copySelection)
+        contextMenu.exec_(event.globalPos())
+
+    def copySelection(self):
+        selection = self.selectionModel().selection().indexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[''] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = index.data()
+            stream = '\n'.join('\t'.join(row) for row in table)
+            QGuiApplication.clipboard().setText(stream)
+
+
+class AppForm(QMainWindow):
+    def __init__(self, parent=None, df=pd.DataFrame(),title = 'AppForm'):
+        self.df = df
+        self.title = title 
+        self.FileName_Hint = title
+        QMainWindow.__init__(self, parent)
+        self.setWindowTitle(self.title)
+        self.create_main_frame()
+
+    def create_main_frame(self):        
+        self.resize(400, 600) 
+        self.main_frame = QWidget()
+        self.table = CustomQTableView()
+        model = PandasModel(self.df)
+        self.table.setModel(model)  # 设置表格视图的模型
+        self.save_button = QPushButton('&Save')
+        self.save_button.clicked.connect(self.saveDataFile)
+        self.vbox = QVBoxLayout()
+        self.vbox.addWidget(self.table)
+        self.vbox.addWidget(self.save_button)
+        self.main_frame.setLayout(self.vbox)
+        self.setCentralWidget(self.main_frame)
+
+    def saveDataFile(self):
+
+        DataFileOutput, ok2 = QFileDialog.getSaveFileName(self,
+                                                          '文件保存',
+                                                          'C:/' + self.FileName_Hint,
+                                                          'Excel Files (*.xlsx);;CSV Files (*.csv)')  # 数据文件保存输出
+
+        if "Label" in self.df.columns.values.tolist():
+            self.df = self.df.set_index('Label')
+
+        if (DataFileOutput != ''):
+
+            if ('csv' in DataFileOutput):
+                self.df.to_csv(DataFileOutput, sep=',', encoding='utf-8')
+
+            elif ('xls' in DataFileOutput):
+                self.df.to_excel(DataFileOutput, encoding='utf-8')
 
 
 class QSwitch(QSlider):
@@ -129,8 +195,8 @@ class QSwitch(QSlider):
             self.setValue(0)
 
 class TAS_Extended(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        QMainWindow.__init__(self, parent)
         self.init_data()
         self.init_ui()
 
@@ -149,6 +215,7 @@ class TAS_Extended(QMainWindow):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
 
+        self.main_frame = QWidget()
         # 创建一个空的QWidget作为间隔
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -228,35 +295,29 @@ class TAS_Extended(QMainWindow):
         # 在工具栏中添加一个Export action
         export_action = QAction('Export Result', self)
         export_action.setShortcut('Ctrl+E')  # 设置快捷键为Ctrl+E
-        export_action.triggered.connect(self.export_result)  # 连接到export_data方法
+        export_action.triggered.connect(self.export_result)  # 连接到export_result方法
         toolbar.addAction(export_action)
 
 
         # 创建一个表格视图
-        self.table = QTableView()
+        self.table = CustomQTableView()
 
         # 创建一个Matplotlib画布
         self.fig = Figure((10,10), dpi=self.dpi)
-
-        # self.ax = self.fig.subplots_adjust(hspace=0.5, wspace=0.5, left=0.13, bottom=0.2, right=0.7, top=0.9)
-
         self.canvas = FigureCanvas(self.fig)
-        # self.canvas = MPLCanvas(self, width=5, height=4, dpi=100)
 
         # 创建一个水平布局并添加表格视图和画布
         base_layout = QHBoxLayout()
-        self.left_layout = QHBoxLayout()
-        self.right_layout = QHBoxLayout()
-        self.left_layout.addWidget(self.table)
+        self.left_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout()
+        self.left_layout.addWidget(self.table)        
         self.right_layout.addWidget(self.canvas)
         base_layout.addLayout(self.left_layout)
         base_layout.addLayout(self.right_layout)
 
         # 创建一个QWidget，设置其布局为我们刚刚创建的布局，然后设置其为中心部件
-        widget = QWidget()
-        widget.setLayout(base_layout)
-        self.setCentralWidget(widget)
-
+        self.main_frame.setLayout(base_layout)
+        self.setCentralWidget(self.main_frame)
         self.show()
 
     def open_file(self):
@@ -372,7 +433,6 @@ class TAS_Extended(QMainWindow):
         if self.df.empty:
             pass
         else:
-            pass
             # tag='VOL'
             # setting= 'Nolines'
             tag = self.tag
@@ -408,35 +468,33 @@ class TAS_Extended(QMainWindow):
 
             # 创建一个空的set
             label_set = set()
-            if self.df.empty:
-                return
-            else:
-                try:
-                    x = self.df['SiO2(wt%)']
-                    y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
-                    color = self.df['Color']
-                    alpha = self.df['Alpha']
-                    size = self.df['Size']
-                    label = self.df['Label']
 
-                    def plot_group(group):
-                        ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
+            try:
+                x = self.df['SiO2(wt%)']
+                y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
+                color = self.df['Color']
+                alpha = self.df['Alpha']
+                size = self.df['Size']
+                label = self.df['Label']
 
-                    # 创建一个新的DataFrame，包含所有需要的列
-                    df = pd.DataFrame({
-                        'x': x,
-                        'y': y,
-                        'color': color,
-                        'alpha': alpha,
-                        'size': size,
-                        'label': label
-                    })
+                def plot_group(group):
+                    ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
 
-                    # 按照'label'列进行分组，然后对每个组应用plot_group函数
-                    df.groupby('label').apply(plot_group)
-                    
-                except KeyError:
-                    pass
+                # 创建一个新的DataFrame，包含所有需要的列
+                df = pd.DataFrame({
+                    'x': x,
+                    'y': y,
+                    'color': color,
+                    'alpha': alpha,
+                    'size': size,
+                    'label': label
+                })
+
+                # 按照'label'列进行分组，然后对每个组应用plot_group函数
+                df.groupby('label').apply(plot_group)
+                
+            except KeyError:
+                pass
 
             ax.legend()
             # Print the size of the figure
@@ -452,7 +510,61 @@ class TAS_Extended(QMainWindow):
             print('canvas drawn')
 
     def export_result(self):
-        pass
+        self.Polygon_dict = {}
+        if self.df.empty:
+            pass
+        else:
+            pass
+            # 获取当前文件的绝对路径
+            current_file_path = os.path.abspath(__file__)
+
+            # 获取当前文件的目录
+            current_directory = os.path.dirname(current_file_path)
+            # 改变当前工作目录
+            os.chdir(current_directory)
+
+            with open('tas_cord.json') as file:
+                cord = json.load(file)
+
+            # 绘制TAS图解边界线条
+            # Draw TAS diagram boundary lines
+            for type_label, line in cord['coords'].items():
+                x_coords = [point[0] for point in line]
+                y_coords = [point[1] for point in line]
+                polygon = Polygon(list(zip(x_coords, y_coords)), closed=True, fill=None, edgecolor='r')
+                self.Polygon_dict[type_label]=polygon
+            
+            x = self.df['SiO2(wt%)']
+            y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
+            label = self.df['Label']
+
+            
+            # 创建一个函数来判断一个点是否在一个多边形内
+            def point_in_polygon(point, polygon):
+                return Path(polygon).contains_points([point])
+
+            # 创建一个列表来保存所有的标签
+            type_list = []
+
+            cord["Volcanic"].items()
+
+            # 遍历所有的点
+            for x_val, y_val in zip(x, y):
+                # 对于每个点，我们遍历所有的多边形
+                for type_label, polygon in self.Polygon_dict.items():
+                    if point_in_polygon((x_val, y_val), polygon.get_xy()):
+                        # 使用cord["Volcanic"].get(type_label)来获取与type_label对应的值
+                        type_list.append(cord["Volcanic"].get(type_label))
+                        break
+                else:
+                    type_list.append(None)
+
+            df = pd.DataFrame()
+            df = self.df
+            df.insert(0, 'Type Classified', type_list)
+                        
+            self.result_show = AppForm(df= df,title = 'TAS Result')
+            self.result_show.show()   
 
     def toggle_vol_plu(self, checked):
         if not checked:
