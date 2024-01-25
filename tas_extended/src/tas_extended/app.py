@@ -206,6 +206,7 @@ class TAS_Extended(QMainWindow):
         self.dpi = 64
         self.tag = 'VOL'
         self.setting = 'Withlines'
+        self.color_setting = ''
         pass
 
     def init_ui(self):
@@ -286,6 +287,24 @@ class TAS_Extended(QMainWindow):
         toolbar.addWidget(nolines_label)
 
         toolbar.addWidget(spacer) # Add a separator after the second switch
+
+
+        
+        # Add a label before the switch
+        withcolors_label = QLabel("     With colors")
+        toolbar.addWidget(withcolors_label)
+
+        colors_switch = QSwitch()
+        colors_switch.setValue(0)
+        colors_switch.valueChanged.connect(self.toggle_colors)
+        toolbar.addWidget(colors_switch)
+
+        # Add a label after the switch
+        nocolors_label = QLabel("No colors     ")
+        toolbar.addWidget(nocolors_label)
+
+        toolbar.addWidget(spacer) # Add a separator after the second switch
+
 
         # 在工具栏中添加一个Save action
         save_action = QAction('Save Plot', self)
@@ -459,9 +478,10 @@ class TAS_Extended(QMainWindow):
             # setting= 'Nolines'
             tag = self.tag
             setting = self.setting
+            color_setting = self.color_setting
 
             # 'TAS_Base_VOL_Nolines.pkl'
-            pkl_filename='TAS_Base_'+tag+'_'+setting+'.pkl'
+            pkl_filename='TAS_Base_'+tag+'_'+setting+color_setting+'.pkl'
             # Remove the old canvas from the layout        
             # self.canvas.figure.clear()
             self.right_layout.removeWidget(self.canvas)
@@ -593,6 +613,22 @@ class TAS_Extended(QMainWindow):
         else:
             pass
             self.hyper_data()
+
+
+    def toggle_colors(self, checked):
+        if not checked:
+            self.color_setting = ''
+            print('Switched to With Colors')
+        else:
+            self.color_setting = '_Nocolors'
+            print('Switched to No Colors')
+        
+        if self.df.empty:
+            pass
+        else:
+            pass
+            self.hyper_data()
+
 
     def save_figure(self):
         file_name, _ = QFileDialog.getSaveFileName(self, 'Save Figure', '', 'SVG Files (*.svg);;PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg *.jpeg)')
