@@ -25,7 +25,7 @@ except ImportError:
     import importlib_metadata
 
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QAbstractItemView, QMainWindow, QApplication, QMenu, QToolBar, QFileDialog, QTableView, QVBoxLayout, QHBoxLayout, QWidget, QSlider,  QGroupBox , QLabel , QWidgetAction, QPushButton
+from PySide6.QtWidgets import QAbstractItemView, QMainWindow, QApplication, QMenu, QToolBar, QFileDialog, QTableView, QVBoxLayout, QHBoxLayout, QWidget, QSlider,  QGroupBox , QLabel , QWidgetAction, QPushButton, QSizePolicy
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QVariantAnimation, Qt
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -142,12 +142,17 @@ class TAS_Extended(QMainWindow):
         pass
 
     def init_ui(self):
-        self.setWindowTitle('Tas Extended')
+        self.setWindowTitle('TAS Extended')
         self.resize(1024, 600)  # 设置窗口尺寸为1024*600
 
         # 创建工具栏
         toolbar = QToolBar()
         self.addToolBar(toolbar)
+
+        # 创建一个空的QWidget作为间隔
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 
         # 在工具栏中添加一个Open action
         open_action = QAction('Open Data', self)
@@ -169,7 +174,7 @@ class TAS_Extended(QMainWindow):
         # load_action = QAction('Load', self)
         # toolbar.addAction(load_action)
 
-        toolbar.addSeparator()  # Add a separator
+        toolbar.addWidget(spacer) # Add a separator
 
         # 在工具栏中添加一个Plot action
         plot_action = QAction('Traditional Plot', self)
@@ -183,14 +188,8 @@ class TAS_Extended(QMainWindow):
         hyper_action.triggered.connect(self.hyper_data)  # 连接到hyper_data方法
         toolbar.addAction(hyper_action)
 
-        # 在工具栏中添加一个Save action
-        save_action = QAction('Save Plot', self)
-        save_action.setShortcut('Ctrl+S') # 设置快捷键为Ctrl+S
-        save_action.triggered.connect(self.save_figure)  # 连接到save_figure方法
-        toolbar.addAction(save_action)
 
-
-        toolbar.addSeparator()  # Add a separator before the first switch
+        toolbar.addWidget(spacer) # Add a separator before the first switch
 
         # Add a label before the switch
         vol_label = QLabel("     VOL")
@@ -203,7 +202,7 @@ class TAS_Extended(QMainWindow):
         plu_label = QLabel("PLU     ")
         toolbar.addWidget(plu_label)
 
-        toolbar.addSeparator()  # Add a separator between the switches
+        toolbar.addWidget(spacer) # Add a separator between the switches
 
         # Add a label before the switch
         withlines_label = QLabel("     With lines")
@@ -218,7 +217,20 @@ class TAS_Extended(QMainWindow):
         nolines_label = QLabel("No lines     ")
         toolbar.addWidget(nolines_label)
 
-        toolbar.addSeparator()  # Add a separator after the second switch
+        toolbar.addWidget(spacer) # Add a separator after the second switch
+
+        # 在工具栏中添加一个Save action
+        save_action = QAction('Save Plot', self)
+        save_action.setShortcut('Ctrl+S')  # 设置快捷键为Ctrl+S
+        save_action.triggered.connect(self.save_figure)  # 连接到save_figure方法
+        toolbar.addAction(save_action)
+
+        # 在工具栏中添加一个Export action
+        export_action = QAction('Export Result', self)
+        export_action.setShortcut('Ctrl+E')  # 设置快捷键为Ctrl+E
+        export_action.triggered.connect(self.export_result)  # 连接到export_data方法
+        toolbar.addAction(export_action)
+
 
         # 创建一个表格视图
         self.table = QTableView()
@@ -303,6 +315,7 @@ class TAS_Extended(QMainWindow):
                 y_center = sum(y_coords) / len(y_coords)
                 ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=6.5)
 
+
             # 创建一个空的set
             label_set = set()
             try:
@@ -328,9 +341,23 @@ class TAS_Extended(QMainWindow):
 
                 # 按照'label'列进行分组，然后对每个组应用plot_group函数
                 df.groupby('label').apply(plot_group)
+
+                
+                # # 获取当前的视域范围
+                # xlim = ax.get_xlim()
+                # ylim = ax.get_ylim()
+                # # 计算在视域范围内的数据点的数量
+                # visible_points = self.df[(x>= xlim[0]) & 
+                #                         (x<= xlim[1]) & 
+                #                         (y >= ylim[0]) & 
+                #                         (y<= ylim[1])]
+                # num_visible_points = len(visible_points)
+                # # 在图上显示可见的数据点的数量
+                # ax.text(0.05, 0.95, f'Plotted points: {num_visible_points}', transform=ax.transAxes, verticalalignment='top')
                 
             except KeyError:
                 pass
+            
 
             ax.legend()
             ax.set_xlabel(r"$SiO2$", fontsize=9)
@@ -424,6 +451,8 @@ class TAS_Extended(QMainWindow):
             self.canvas.draw()
             print('canvas drawn')
 
+    def export_result(self):
+        pass
 
     def toggle_vol_plu(self, checked):
         if not checked:
