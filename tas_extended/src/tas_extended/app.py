@@ -25,8 +25,9 @@ except ImportError:
     import importlib_metadata
 
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QAbstractItemView, QMainWindow, QApplication, QMenu, QToolBar, QFileDialog, QTableView, QHBoxLayout, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QMainWindow, QApplication, QMenu, QToolBar, QFileDialog, QTableView, QVBoxLayout, QHBoxLayout, QWidget, QSlider,  QGroupBox , QLabel , QWidgetAction, QPushButton
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QVariantAnimation, Qt
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import pandas as pd
@@ -113,6 +114,20 @@ class CustomQTableView(QTableView):
         return
 
 
+
+class QSwitch(QSlider):
+    def __init__(self, parent=None):
+        super().__init__(Qt.Horizontal, parent)
+        self.setRange(0, 1)
+        self.setFixedSize(60, 20)
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if self.value() > 0.5:
+            self.setValue(1)
+        else:
+            self.setValue(0)
+
 class TAS_Extended(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -122,6 +137,8 @@ class TAS_Extended(QMainWindow):
     def init_data(self):
         self.df = pd.DataFrame()        
         self.dpi = 64
+        self.tag = 'VOL'
+        self.setting = 'Withlines'
         pass
 
     def init_ui(self):
@@ -133,38 +150,75 @@ class TAS_Extended(QMainWindow):
         self.addToolBar(toolbar)
 
         # 在工具栏中添加一个Open action
-        open_action = QAction('Open', self)
+        open_action = QAction('Open Data', self)
+        open_action.setShortcut('Ctrl+O')  # 设置快捷键为Ctrl+O
         open_action.triggered.connect(self.open_file)  # 连接到open_file方法
         toolbar.addAction(open_action)
 
-        # 在工具栏中添加一个Connect action
-        connect_action = QAction('Connect', self)
-        toolbar.addAction(connect_action)
+        # 在工具栏中添加一个Clear action
+        clear_action = QAction('Clear Data', self)
+        clear_action.setShortcut('Ctrl+C') # 设置快捷键为Ctrl+C
+        clear_action.triggered.connect(self.clear_data)  # 连接到clear_data方法
+        toolbar.addAction(clear_action)
 
-        # 在工具栏中添加一个Load action
-        load_action = QAction('Load', self)
-        toolbar.addAction(load_action)
+        # # 在工具栏中添加一个Connect action
+        # connect_action = QAction('Connect', self)
+        # toolbar.addAction(connect_action)
+
+        # # 在工具栏中添加一个Load action
+        # load_action = QAction('Load', self)
+        # toolbar.addAction(load_action)
+
+        toolbar.addSeparator()  # Add a separator
 
         # 在工具栏中添加一个Plot action
-        plot_action = QAction('Plot', self)
+        plot_action = QAction('Traditional Plot', self)
+        plot_action.setShortcut('Ctrl+T') # 设置快捷键为Ctrl+T
         plot_action.triggered.connect(self.plot_data)  # 连接到plot_data方法
         toolbar.addAction(plot_action)
 
         # 在工具栏中添加一个Hyper action
-        hyper_action = QAction('Hyper', self)
+        hyper_action = QAction('Hyper Plot', self)
+        hyper_action.setShortcut('Ctrl+H') # 设置快捷键为Ctrl+H
         hyper_action.triggered.connect(self.hyper_data)  # 连接到hyper_data方法
         toolbar.addAction(hyper_action)
 
         # 在工具栏中添加一个Save action
-        save_action = QAction('Savefig', self)
+        save_action = QAction('Save Plot', self)
+        save_action.setShortcut('Ctrl+S') # 设置快捷键为Ctrl+S
         save_action.triggered.connect(self.save_figure)  # 连接到save_figure方法
         toolbar.addAction(save_action)
 
-        # 在工具栏中添加一个Clear action
-        clear_action = QAction('Clear', self)
-        clear_action.triggered.connect(self.clear_data)  # 连接到clear_data方法
-        toolbar.addAction(clear_action)
 
+        toolbar.addSeparator()  # Add a separator before the first switch
+
+        # Add a label before the switch
+        vol_label = QLabel("     VOL")
+        toolbar.addWidget(vol_label)
+        type_switch = QSwitch()
+        type_switch.setValue(0)
+        type_switch.valueChanged.connect(self.toggle_vol_plu)
+        toolbar.addWidget(type_switch)
+        # Add a label after the switch
+        plu_label = QLabel("PLU     ")
+        toolbar.addWidget(plu_label)
+
+        toolbar.addSeparator()  # Add a separator between the switches
+
+        # Add a label before the switch
+        withlines_label = QLabel("     With lines")
+        toolbar.addWidget(withlines_label)
+
+        lines_switch = QSwitch()
+        lines_switch.setValue(0)
+        lines_switch.valueChanged.connect(self.toggle_lines)
+        toolbar.addWidget(lines_switch)
+
+        # Add a label after the switch
+        nolines_label = QLabel("No lines     ")
+        toolbar.addWidget(nolines_label)
+
+        toolbar.addSeparator()  # Add a separator after the second switch
 
         # 创建一个表格视图
         self.table = QTableView()
@@ -219,38 +273,38 @@ class TAS_Extended(QMainWindow):
     def plot_data(self):
         self.canvas.figure.clear()
         ax = self.canvas.figure.subplots()
-        # 获取当前文件的绝对路径
-        current_file_path = os.path.abspath(__file__)
-
-        # 获取当前文件的目录
-        current_directory = os.path.dirname(current_file_path)
-        # 改变当前工作目录
-        os.chdir(current_directory)
-
-        with open('tas_cord.json') as file:
-            cord = json.load(file)
-
-        # 绘制TAS图解边界线条
-        # Draw TAS diagram boundary lines
-        for line in cord['coords'].values():
-            x_coords = [point[0] for point in line]
-            y_coords = [point[1] for point in line]
-            ax.plot(x_coords, y_coords, color='black', linewidth=0.3)
-
-                # 在TAS图解中添加岩石种类标签
-        # Add rock type labels in TAS diagram
-        for label, coords in cord['coords'].items():
-            x_coords = [point[0] for point in coords]
-            y_coords = [point[1] for point in coords]
-            x_center = sum(x_coords) / len(x_coords)
-            y_center = sum(y_coords) / len(y_coords)
-            ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=6.5)
-
-        # 创建一个空的set
-        label_set = set()
         if self.df.empty:
-            return
+            pass
         else:
+            # 获取当前文件的绝对路径
+            current_file_path = os.path.abspath(__file__)
+
+            # 获取当前文件的目录
+            current_directory = os.path.dirname(current_file_path)
+            # 改变当前工作目录
+            os.chdir(current_directory)
+
+            with open('tas_cord.json') as file:
+                cord = json.load(file)
+
+            # 绘制TAS图解边界线条
+            # Draw TAS diagram boundary lines
+            for line in cord['coords'].values():
+                x_coords = [point[0] for point in line]
+                y_coords = [point[1] for point in line]
+                ax.plot(x_coords, y_coords, color='black', linewidth=0.3)
+
+                    # 在TAS图解中添加岩石种类标签
+            # Add rock type labels in TAS diagram
+            for label, coords in cord['coords'].items():
+                x_coords = [point[0] for point in coords]
+                y_coords = [point[1] for point in coords]
+                x_center = sum(x_coords) / len(x_coords)
+                y_center = sum(y_coords) / len(y_coords)
+                ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=6.5)
+
+            # 创建一个空的set
+            label_set = set()
             try:
                 x = self.df['SiO2(wt%)']
                 y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
@@ -278,90 +332,126 @@ class TAS_Extended(QMainWindow):
             except KeyError:
                 pass
 
-        ax.legend()
-        ax.set_xlabel(r"$SiO2$", fontsize=9)
-        ax.set_ylabel(r"$Na2O+K2O$", fontsize=9)
-        ax.set_title(r"Extended TAS Diagram", fontsize=9)
-        ax.set_xlim(35,80)
-        self.canvas.draw()
+            ax.legend()
+            ax.set_xlabel(r"$SiO2$", fontsize=9)
+            ax.set_ylabel(r"$Na2O+K2O$", fontsize=9)
+            ax.set_title(r"Traditional TAS Diagram", fontsize=9)
+            ax.set_xlim(35,80)
+            ax.set_ylim(0,17.647826086956513)  
+            self.canvas.draw()
 
-    
+
     def hyper_data(self):
-        # Remove the old canvas from the layout        
-        # self.canvas.figure.clear()
-        self.right_layout.removeWidget(self.canvas)
-
-        # Delete the old canvas
-        self.canvas.deleteLater()
-
-        # 获取当前文件的绝对路径
-        current_file_path = os.path.abspath(__file__)
-
-        # 获取当前文件的目录
-        current_directory = os.path.dirname(current_file_path)
-        # 改变当前工作目录
-        os.chdir(current_directory)
-
-        with open('tas_cord.json') as file:
-            cord = json.load(file)
-        # Load the Figure
-        with open('TAS_Base_VOL.pkl', 'rb') as f:
-            fig = pickle.load(f)
-            print('fig loaded')
-        # Create a new FigureCanvas
-
-        # Get the Axes
-        ax = fig.axes[0]
-        print('ax called')
-
-
-        # 创建一个空的set
-        label_set = set()
         if self.df.empty:
-            return
+            pass
         else:
-            try:
-                x = self.df['SiO2(wt%)']
-                y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
-                color = self.df['Color']
-                alpha = self.df['Alpha']
-                size = self.df['Size']
-                label = self.df['Label']
+            pass
+            # tag='VOL'
+            # setting= 'Nolines'
+            tag = self.tag
+            setting = self.setting
 
-                def plot_group(group):
-                    ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
+            # 'TAS_Base_VOL_Nolines.pkl'
+            pkl_filename='TAS_Base_'+tag+'_'+setting+'.pkl'
+            # Remove the old canvas from the layout        
+            # self.canvas.figure.clear()
+            self.right_layout.removeWidget(self.canvas)
 
-                # 创建一个新的DataFrame，包含所有需要的列
-                df = pd.DataFrame({
-                    'x': x,
-                    'y': y,
-                    'color': color,
-                    'alpha': alpha,
-                    'size': size,
-                    'label': label
-                })
+            # Delete the old canvas
+            self.canvas.deleteLater()
 
-                # 按照'label'列进行分组，然后对每个组应用plot_group函数
-                df.groupby('label').apply(plot_group)
-                
-            except KeyError:
-                pass
+            # 获取当前文件的绝对路径
+            current_file_path = os.path.abspath(__file__)
 
-        ax.legend()
-        # Print the size of the figure
-        print('Figure size:', fig.get_size_inches())
+            # 获取当前文件的目录
+            current_directory = os.path.dirname(current_file_path)
+            # 改变当前工作目录
+            os.chdir(current_directory)
 
-        fig.dpi=self.dpi
-        self.canvas = FigureCanvas(fig)
+            # Load the Figure
+            with open(pkl_filename, 'rb') as f:
+                fig = pickle.load(f)
+                print('fig loaded')
+            # Create a new FigureCanvas
 
-        # Add the new canvas to the layout
-        self.right_layout.addWidget(self.canvas)
-        print('fig sent to canvas')
-        self.canvas.draw()
-        print('canvas drawn')
+            # Get the Axes
+            ax = fig.axes[0]
+            print('ax called')
 
 
+            # 创建一个空的set
+            label_set = set()
+            if self.df.empty:
+                return
+            else:
+                try:
+                    x = self.df['SiO2(wt%)']
+                    y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
+                    color = self.df['Color']
+                    alpha = self.df['Alpha']
+                    size = self.df['Size']
+                    label = self.df['Label']
 
+                    def plot_group(group):
+                        ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
+
+                    # 创建一个新的DataFrame，包含所有需要的列
+                    df = pd.DataFrame({
+                        'x': x,
+                        'y': y,
+                        'color': color,
+                        'alpha': alpha,
+                        'size': size,
+                        'label': label
+                    })
+
+                    # 按照'label'列进行分组，然后对每个组应用plot_group函数
+                    df.groupby('label').apply(plot_group)
+                    
+                except KeyError:
+                    pass
+
+            ax.legend()
+            # Print the size of the figure
+            print('Figure size:', fig.get_size_inches())
+
+            fig.dpi=self.dpi
+            self.canvas = FigureCanvas(fig)
+
+            # Add the new canvas to the layout
+            self.right_layout.addWidget(self.canvas)
+            print('fig sent to canvas')
+            self.canvas.draw()
+            print('canvas drawn')
+
+
+    def toggle_vol_plu(self, checked):
+        if not checked:
+            self.tag = 'VOL'
+            print('Switched to VOL')
+        else:
+            self.tag = 'PLU'
+            print('Switched to PLU')
+
+        if self.df.empty:
+            pass
+        else:
+            pass
+            self.hyper_data()
+
+    def toggle_lines(self, checked):
+        if not checked:
+            self.setting = 'Withlines'
+            print('Switched to With Lines')
+        else:
+            self.setting = 'Nolines'
+            print('Switched to No Lines')
+        
+        if self.df.empty:
+            pass
+        else:
+            pass
+            self.hyper_data()
 
     def save_figure(self):
         file_name, _ = QFileDialog.getSaveFileName(self, 'Save Figure', '', 'SVG Files (*.svg);;PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg *.jpeg)')
