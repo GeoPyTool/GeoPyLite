@@ -159,3 +159,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 tas/src/tas/TAS.db
+tas_extended/src/tas_extended/TAS.db
