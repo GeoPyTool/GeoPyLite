@@ -154,7 +154,7 @@ class AppForm(QMainWindow):
         DataFileOutput, ok2 = QFileDialog.getSaveFileName(self,
                                                           '文件保存',
                                                           'C:/' + self.FileName_Hint,
-                                                          'Excel Files (*.xlsx);;CSV Files (*.csv)')  # 数据文件保存输出
+                                                          'CSV Files (*.csv);;Excel Files (*.xlsx)')  # 数据文件保存输出
 
         if "Label" in self.df.columns.values.tolist():
             self.df = self.df.set_index('Label')
@@ -165,7 +165,7 @@ class AppForm(QMainWindow):
                 self.df.to_csv(DataFileOutput, sep=',', encoding='utf-8')
 
             elif ('xls' in DataFileOutput):
-                self.df.to_excel(DataFileOutput, encoding='utf-8')
+                self.df.to_excel(DataFileOutput)
 
 
 

@@ -167,7 +167,7 @@ class AppForm(QMainWindow):
         DataFileOutput, ok2 = QFileDialog.getSaveFileName(self,
                                                           '文件保存',
                                                           'C:/' + self.FileName_Hint,
-                                                          'Excel Files (*.xlsx);;CSV Files (*.csv)')  # 数据文件保存输出
+                                                          'CSV Files (*.csv);;Excel Files (*.xlsx)')  # 数据文件保存输出
 
         if "Label" in self.df.columns.values.tolist():
             self.df = self.df.set_index('Label')
@@ -178,7 +178,7 @@ class AppForm(QMainWindow):
                 self.df.to_csv(DataFileOutput, sep=',', encoding='utf-8')
 
             elif ('xls' in DataFileOutput):
-                self.df.to_excel(DataFileOutput, encoding='utf-8')
+                self.df.to_excel(DataFileOutput)
 
 
 class QSwitch(QSlider):
@@ -198,6 +198,7 @@ class TAS_Extended(QMainWindow):
     def __init__(self, parent=None):
         QMainWindow.__init__(self, parent)
         self.init_data()
+        self.generate_polygon()
         self.init_ui()
 
     def init_data(self):
@@ -320,6 +321,27 @@ class TAS_Extended(QMainWindow):
         self.setCentralWidget(self.main_frame)
         self.show()
 
+    def generate_polygon(self):
+        self.Polygon_dict = {}
+        # 获取当前文件的绝对路径
+        current_file_path = os.path.abspath(__file__)
+
+        # 获取当前文件的目录
+        current_directory = os.path.dirname(current_file_path)
+        # 改变当前工作目录
+        os.chdir(current_directory)
+
+        with open('tas_cord.json') as file:
+            cord = json.load(file)
+        self.tas_cord = cord
+        # 绘制TAS图解边界线条
+        # Draw TAS diagram boundary lines
+        for type_label, line in cord['coords'].items():
+            x_coords = [point[0] for point in line]
+            y_coords = [point[1] for point in line]
+            polygon = Polygon(list(zip(x_coords, y_coords)), closed=True, fill=None, edgecolor='r')
+            self.Polygon_dict[type_label]=polygon
+
     def open_file(self):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open File', '', 'CSV Files (*.csv);;Excel Files (*.xls *.xlsx)')
         if file_name:
@@ -367,7 +389,7 @@ class TAS_Extended(QMainWindow):
                 y_coords = [point[1] for point in line]
                 ax.plot(x_coords, y_coords, color='black', linewidth=0.3)
 
-                    # 在TAS图解中添加岩石种类标签
+            # 在TAS图解中添加岩石种类标签
             # Add rock type labels in TAS diagram
             for label, coords in cord['coords'].items():
                 x_coords = [point[0] for point in coords]
@@ -509,36 +531,13 @@ class TAS_Extended(QMainWindow):
             self.canvas.draw()
             print('canvas drawn')
 
-    def export_result(self):
-        self.Polygon_dict = {}
+    def export_result(self):   
         if self.df.empty:
             pass
         else:
-            pass
-            # 获取当前文件的绝对路径
-            current_file_path = os.path.abspath(__file__)
-
-            # 获取当前文件的目录
-            current_directory = os.path.dirname(current_file_path)
-            # 改变当前工作目录
-            os.chdir(current_directory)
-
-            with open('tas_cord.json') as file:
-                cord = json.load(file)
-
-            # 绘制TAS图解边界线条
-            # Draw TAS diagram boundary lines
-            for type_label, line in cord['coords'].items():
-                x_coords = [point[0] for point in line]
-                y_coords = [point[1] for point in line]
-                polygon = Polygon(list(zip(x_coords, y_coords)), closed=True, fill=None, edgecolor='r')
-                self.Polygon_dict[type_label]=polygon
-            
+            pass              
             x = self.df['SiO2(wt%)']
-            y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
-            label = self.df['Label']
-
-            
+            y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']            
             # 创建一个函数来判断一个点是否在一个多边形内
             def point_in_polygon(point, polygon):
                 return Path(polygon).contains_points([point])
@@ -546,22 +545,23 @@ class TAS_Extended(QMainWindow):
             # 创建一个列表来保存所有的标签
             type_list = []
 
-            cord["Volcanic"].items()
-
             # 遍历所有的点
             for x_val, y_val in zip(x, y):
                 # 对于每个点，我们遍历所有的多边形
                 for type_label, polygon in self.Polygon_dict.items():
                     if point_in_polygon((x_val, y_val), polygon.get_xy()):
                         # 使用cord["Volcanic"].get(type_label)来获取与type_label对应的值
-                        type_list.append(cord["Volcanic"].get(type_label))
+                        type_list.append(self.tas_cord["Volcanic"].get(type_label))
                         break
                 else:
                     type_list.append(None)
 
-            df = pd.DataFrame()
-            df = self.df
-            df.insert(0, 'Type Classified', type_list)
+
+        
+            df = pd.DataFrame()        
+            df = self.df 
+            if 'TAS Classified as VOL' not in df.columns:
+                df.insert(0, 'TAS Classified as VOL', type_list)
                         
             self.result_show = AppForm(df= df,title = 'TAS Result')
             self.result_show.show()   
