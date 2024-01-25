@@ -417,12 +417,12 @@ class TAS_Extended(QMainWindow):
             # Load the Figure
             with open(pkl_filename, 'rb') as f:
                 fig = pickle.load(f)
-                print('fig loaded')
+                # print('fig loaded')
             # Create a new FigureCanvas
 
             # Get the Axes
             ax = fig.axes[0]
-            print('ax called')
+            # print('ax called')
 
 
             # 创建一个空的set
@@ -457,16 +457,16 @@ class TAS_Extended(QMainWindow):
 
             ax.legend()
             # Print the size of the figure
-            print('Figure size:', fig.get_size_inches())
+            # print('Figure size:', fig.get_size_inches())
 
             fig.dpi=self.dpi
             self.canvas = FigureCanvas(fig)
 
             # Add the new canvas to the layout
             self.right_layout.addWidget(self.canvas)
-            print('fig sent to canvas')
+            # print('fig sent to canvas')
             self.canvas.draw()
-            print('canvas drawn')
+            # print('canvas drawn')
 
     def export_result(self):   
         if self.df.empty:
@@ -492,8 +492,36 @@ class TAS_Extended(QMainWindow):
                         break
                 else:
                     type_list.append(None)
+            
+            kde_result = {}
+            data = np.column_stack((x, y))
+            file_path = self.tag + '_GMM_kde'
 
+            # Check if the path exists
+            if os.path.exists(file_path):
+                # Iterate over all files in the directory
+                for filename in os.listdir(file_path):
+                    # print(filename)
+                    type_target = filename.replace('_kde.pkl', '')
+                    tmp_list = []
+                    full_file_path = os.path.join(file_path, filename)
+                    with open(full_file_path, 'rb') as f:
+                        kde = pickle.load(f)
+                     # 计算新点的类别概率
+                    new_point = np.array([[50,8],[44,7],[51,7]])  # 新点
+                    # new_point = new_point.reshape(1, -1)  # 将new_point重新塑形为二维数组
 
+                    for x_val, y_val in zip(x, y):
+                        new_point = np.array([[x_val,y_val]])
+                        # 计算新点的对数概率密度
+                        log_prob = kde.score_samples(new_point)
+                        # 将对数概率密度转换为概率密度
+                        new_point_prob = np.exp(log_prob)
+                        tmp_list.append(new_point_prob[0])
+                        # print(f"The probability of {type_target} is {new_point_prob[0]:.3f}")
+
+                    
+  
         
             df = pd.DataFrame()        
             df = self.df 
@@ -506,10 +534,10 @@ class TAS_Extended(QMainWindow):
     def toggle_vol_plu(self, checked):
         if not checked:
             self.tag = 'VOL'
-            print('Switched to VOL')
+            # print('Switched to VOL')
         else:
             self.tag = 'PLU'
-            print('Switched to PLU')
+            # print('Switched to PLU')
 
         if self.df.empty:
             pass
@@ -520,10 +548,10 @@ class TAS_Extended(QMainWindow):
     def toggle_lines(self, checked):
         if not checked:
             self.setting = 'Withlines'
-            print('Switched to With Lines')
+            # print('Switched to With Lines')
         else:
             self.setting = 'Nolines'
-            print('Switched to No Lines')
+            # print('Switched to No Lines')
         
         if self.df.empty:
             pass
@@ -531,14 +559,13 @@ class TAS_Extended(QMainWindow):
             pass
             self.plot_data()
 
-
     def toggle_colors(self, checked):
         if not checked:
             self.color_setting = ''
-            print('Switched to With Colors')
+            # print('Switched to With Colors')
         else:
             self.color_setting = '_Nocolors'
-            print('Switched to No Colors')
+            # print('Switched to No Colors')
         
         if self.df.empty:
             pass
@@ -559,7 +586,8 @@ class TAS_Extended(QMainWindow):
                 else:
                     self.canvas.figure.savefig(file_name)
             except Exception as e:
-                print(f"Failed to save figure: {e}")
+                # print(f"Failed to save figure: {e}")
+                pass
 
 def main():
     # Linux desktop environments use app's .desktop file to integrate the app
