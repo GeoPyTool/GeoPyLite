@@ -493,10 +493,8 @@ class TAS_Extended(QMainWindow):
                 else:
                     type_list.append(None)
         
-            df = pd.DataFrame()        
-            df = self.df 
-            if 'TAS Classified as VOL' not in df.columns:
-                df.insert(0, 'TAS Classified as VOL', type_list)               
+
+            tas_df = pd.DataFrame({'TAS as VOL':type_list})              
 
             file_path = self.tag + '_GMM_kde'
 
@@ -532,7 +530,7 @@ class TAS_Extended(QMainWindow):
                 kde_Type_df =  pd.DataFrame(kde_result_df.idxmax(axis=1), columns=['Classification'])
                 kde_Probs_df =  pd.DataFrame(kde_result_df.max(axis=1), columns=['Probability'])
 
-                df = pd.concat([kde_Type_df, kde_Probs_df, df, kde_result_df], axis=1)
+                df = pd.concat([kde_Type_df, kde_Probs_df, tas_df, self.df], axis=1)
 
 
             self.result_show = AppForm(df= df,title = 'TAS Result')

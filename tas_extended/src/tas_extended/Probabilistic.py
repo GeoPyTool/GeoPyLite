@@ -70,10 +70,10 @@ current_directory = os.path.dirname(current_file_path)
 os.chdir(current_directory)
 
 
-n = 10
+n = 9
 
 
-df_train = pd.read_pickle('df_Komatiite.pkl')
+df_train = pd.read_pickle('df_Mugearite.pkl')
 
 
 
@@ -87,8 +87,8 @@ x_test = np.array([45.76428218, 31.81390091, 55.28563359, 60.96200656, 70.437111
 y_test = np.array([13.76185634, 10.33199649, 8.79003757, 14.88086825, 9.92049699,
        2.49193062])
 
-x_test = np.linspace(35, 90, n)
-y_test = np.linspace(-2, 12, n)
+x_test = np.linspace(35, 80, n)
+y_test = np.linspace(2, 16, n)
 
 # x_test_mesh, y_test_mesh = np.meshgrid(x_test, y_test)
 # test_points = np.c_[x_test_mesh.ravel(), y_test_mesh.ravel()]
