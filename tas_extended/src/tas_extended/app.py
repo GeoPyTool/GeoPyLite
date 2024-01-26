@@ -492,42 +492,49 @@ class TAS_Extended(QMainWindow):
                         break
                 else:
                     type_list.append(None)
-            
-            kde_result = {}
-            data = np.column_stack((x, y))
+        
+            df = pd.DataFrame()        
+            df = self.df 
+            if 'TAS Classified as VOL' not in df.columns:
+                df.insert(0, 'TAS Classified as VOL', type_list)               
+
             file_path = self.tag + '_GMM_kde'
 
             # Check if the path exists
             if os.path.exists(file_path):
                 # Iterate over all files in the directory
+                kde_result = {}
+                data_test = np.column_stack((x, y))
+
                 for filename in os.listdir(file_path):
                     # print(filename)
                     type_target = filename.replace('_kde.pkl', '')
-                    tmp_list = []
                     full_file_path = os.path.join(file_path, filename)
                     with open(full_file_path, 'rb') as f:
                         kde = pickle.load(f)
-                     # 计算新点的类别概率
-                    new_point = np.array([[50,8],[44,7],[51,7]])  # 新点
-                    # new_point = new_point.reshape(1, -1)  # 将new_point重新塑形为二维数组
-
-                    for x_val, y_val in zip(x, y):
-                        new_point = np.array([[x_val,y_val]])
-                        # 计算新点的对数概率密度
-                        log_prob = kde.score_samples(new_point)
-                        # 将对数概率密度转换为概率密度
-                        new_point_prob = np.exp(log_prob)
-                        tmp_list.append(new_point_prob[0])
-                        # print(f"The probability of {type_target} is {new_point_prob[0]:.3f}")
-
                     
-  
-        
-            df = pd.DataFrame()        
-            df = self.df 
-            if 'TAS Classified as VOL' not in df.columns:
-                df.insert(0, 'TAS Classified as VOL', type_list)
-                        
+                    data_whole = np.column_stack((np.linspace(35, 90, 1024),np.linspace(0, 20, 1024)))    
+                    # Calculate the log probability density for each point in the training set
+                    log_whole_prob_density = kde.score_samples(data_whole)
+                    # Convert the log probability density to the original probability density
+                    prob_density = np.exp(log_whole_prob_density)
+                    test_densities = kde.score_samples(data_test)                    
+                    test_probabilities = np.exp(test_densities)
+                    max_prob_density = max(np.max(prob_density),np.max(test_probabilities))
+                    # Normalize probabilities
+                    test_probabilities /=  max_prob_density 
+                    # print(f"The probability of {type_target} is {test_probabilities:.3f}")
+                    kde_result[type_target] = test_probabilities.round(3)
+
+                kde_result_df = pd.DataFrame(kde_result)
+                # Create a new DataFrame
+                # Assuming kde_result_df is your DataFrame
+                kde_Type_df =  pd.DataFrame(kde_result_df.idxmax(axis=1), columns=['Classification'])
+                kde_Probs_df =  pd.DataFrame(kde_result_df.max(axis=1), columns=['Probability'])
+
+                df = pd.concat([kde_Type_df, kde_Probs_df, df, kde_result_df], axis=1)
+
+
             self.result_show = AppForm(df= df,title = 'TAS Result')
             self.result_show.show()   
 
