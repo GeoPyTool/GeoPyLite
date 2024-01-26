@@ -41,7 +41,7 @@ from PySide6.QtCore import QAbstractTableModel, Qt, QModelIndex
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 plt.rcParams['svg.fonttype'] = 'none'
-
+plt.rcParams['pdf.fonttype'] = 42
 
 # 获取当前文件的绝对路径
 current_file_path = os.path.abspath(__file__)
