@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import json
 
 
 def Compare(df_train= pd.DataFrame(),df_test= pd.DataFrame(), x_label='x',y_label='x'):
@@ -70,13 +71,36 @@ current_directory = os.path.dirname(current_file_path)
 os.chdir(current_directory)
 
 
+# 创建一个宽高比为2:1的figure
+fig = plt.figure(figsize=(10, 5))     
+ax = fig.add_subplot(1, 1, 1)
+# 设置axes的宽高比为3:2
+ax.set_aspect(3/2)
+
 n = 9
+
+with open('tas_cord.json') as file:
+    cord = json.load(file)
+# 绘制TAS图解边界线条
+# Draw TAS diagram boundary lines
+for line in cord['coords'].values():
+    x_coords = [point[0] for point in line]
+    y_coords = [point[1] for point in line]
+    ax.plot(x_coords, y_coords, color='black', linewidth=0.3)
+    
+
+# 在TAS图解中添加岩石种类标签
+# Add rock type labels in TAS diagram
+# for label, coords in cord['coords'].items():
+#     x_coords = [point[0] for point in coords]
+#     y_coords = [point[1] for point in coords]
+#     x_center = sum(x_coords) / len(x_coords)
+#     y_center = sum(y_coords) / len(y_coords)
+#     ax.text(x_center, y_center, label, ha='center', va='center', bbox=dict(facecolor='white', alpha=0.3), fontsize=9)
+
 
 
 df_train = pd.read_pickle('df_Mugearite.pkl')
-
-
-
 df_train['SIO2_wt_calibred']
 df_train['ALL_Alkaline_wt_calibred']
 # print(df_train)
@@ -99,16 +123,26 @@ df_test = pd.DataFrame({'SIO2_wt_calibred': x_test, 'ALL_Alkaline_wt_calibred': 
 # Call the Compare function
 target_probabilities = Compare(df_train, df_test,'SIO2_wt_calibred', 'ALL_Alkaline_wt_calibred')
 
-# Plot training data in blue
-plt.scatter(df_train['SIO2_wt_calibred'], df_train['ALL_Alkaline_wt_calibred'], color='blue', label='Training data',edgecolors= None,alpha=0.1)
+# Plot Mugearite Training Data in blue
+ax.scatter(df_train['SIO2_wt_calibred'], df_train['ALL_Alkaline_wt_calibred'], color='blue', label='Mugearite Training Data',edgecolors= None,alpha=0.1)
 
 
 # Plot testing data in red
-plt.scatter(df_test['SIO2_wt_calibred'], df_test['ALL_Alkaline_wt_calibred'], color='red', label='Testing data',edgecolors= None,alpha=0.3)
+ax.scatter(df_test['SIO2_wt_calibred'], df_test['ALL_Alkaline_wt_calibred'], color='red', label='Testing data',edgecolors= None,alpha=0.3)
 
 # Add probability labels to the test points
 for i, (x, y) in enumerate(zip(df_test['SIO2_wt_calibred'], df_test['ALL_Alkaline_wt_calibred'],)):
     plt.text(x, y, f"{target_probabilities[i]:.2f}", ha='right')
+
+
+ax.set_xlabel(r"$SiO2$", fontsize=9)
+ax.set_ylabel(r"$Na2O+K2O$", fontsize=9)
+ax.set_title(r"Extended TAS Diagram", fontsize=9)
+ax.set_xlim(35,80)
+ax.set_ylim(0,17.647826086956513)  
+
+ax.tick_params(axis='both', labelsize=9)
+# legend = ax.legend(loc='upper left', fontsize=4, bbox_to_anchor=(1, 1))
 
 # Add a legend
 plt.legend()
