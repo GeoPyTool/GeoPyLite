@@ -450,23 +450,40 @@ class TAS_Extended(QMainWindow):
                         self.df['Color'] = self.df['Label'].map(color_dict)
                     else:
                         self.df['Color'] = 'b'  # 默认颜色为蓝色
+                
+                # 如果self.df中没有'Marker'列，根据'label'生成符号
+                if 'Marker' not in self.df.columns:
+                    if 'Label' in self.df.columns:
+                        unique_labels = self.df['Label'].unique()
+                        markers = ['o', 'v', '^', '<', '>', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']  # 可用的matplotlib标记
+                        marker_dict = dict(zip(unique_labels, markers * len(unique_labels)))  # 如果标签数量超过标记类型，会循环使用标记
+                        self.df['Marker'] = self.df['Label'].map(marker_dict)
+                    else:
+                        self.df['Marker'] = 'o'  # 默认符号为圆圈
 
                 color = self.df['Color']
+                marker = self.df['Marker']
                 alpha = self.df['Alpha'] if 'Alpha' in self.df.columns else 0.6
                 size = self.df['Size'] if 'Size' in self.df.columns else 20
-                marker = self.df['Marker'] if 'Marker' in self.df.columns else 'o'
                 label = self.df['Label'] 
 
-
-                # 获取当前图形（gca = get current axis）中的所有数据点
+                # 获取当前ax对象中的所有数据点
                 for child in ax.get_children():
                     # 检查这个子对象是否是一个散点图的集合
                     if isinstance(child, collections.PathCollection):
-                        # 设置透明度
-                        child.set_alpha(0.1)
+                        # 获取当前透明度
+                        current_alpha = child.get_alpha()
+                        # 获取数据点的数量
+                        num_points = child.get_sizes().size
+                        # 根据当前透明度和数据点的数量设置新的透明度
+                        if current_alpha is not None:
+                            if num_points <1000:  # 如果数据点的数量大于100
+                                child.set_alpha(min(current_alpha * 2, 1))  # 提高透明度，但不超过1
+                            elif num_points >3000:  # 如果数据点的数量小于50
+                                child.set_alpha(max(current_alpha / 2, 0.01))  # 降低透明度，但不低于0.01
 
                 def plot_group(group):
-                    ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
+                    ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name,edgecolors='black')
 
                 # 创建一个新的DataFrame，包含所有需要的列
                 df = pd.DataFrame({
