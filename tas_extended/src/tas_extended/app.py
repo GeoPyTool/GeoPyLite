@@ -17,6 +17,7 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.path import Path
 from matplotlib.patches import ConnectionStyle, Polygon
 from matplotlib.collections import PatchCollection
+from matplotlib import collections
 
 
 try:
@@ -456,6 +457,13 @@ class TAS_Extended(QMainWindow):
                 marker = self.df['Marker'] if 'Marker' in self.df.columns else 'o'
                 label = self.df['Label'] 
 
+
+                # 获取当前图形（gca = get current axis）中的所有数据点
+                for child in ax.get_children():
+                    # 检查这个子对象是否是一个散点图的集合
+                    if isinstance(child, collections.PathCollection):
+                        # 设置透明度
+                        child.set_alpha(0.1)
 
                 def plot_group(group):
                     ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
