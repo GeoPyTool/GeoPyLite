@@ -436,12 +436,26 @@ class TAS_Extended(QMainWindow):
             label_set = set()
 
             try:
+
                 x = self.df['SiO2(wt%)']
                 y = self.df['Na2O(wt%)'] + self.df['K2O(wt%)']
+
+                # 如果self.df中没有'Color'列，根据'label'生成颜色
+                if 'Color' not in self.df.columns:
+                    if 'Label' in self.df.columns:
+                        unique_labels = self.df['Label'].unique()
+                        colors = plt.cm.rainbow(np.linspace(0, 1, len(unique_labels)))
+                        color_dict = dict(zip(unique_labels, colors))
+                        self.df['Color'] = self.df['Label'].map(color_dict)
+                    else:
+                        self.df['Color'] = 'b'  # 默认颜色为蓝色
+
                 color = self.df['Color']
-                alpha = self.df['Alpha']
-                size = self.df['Size']
-                label = self.df['Label']
+                alpha = self.df['Alpha'] if 'Alpha' in self.df.columns else 0.6
+                size = self.df['Size'] if 'Size' in self.df.columns else 20
+                marker = self.df['Marker'] if 'Marker' in self.df.columns else 'o'
+                label = self.df['Label'] 
+
 
                 def plot_group(group):
                     ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name)
@@ -453,6 +467,7 @@ class TAS_Extended(QMainWindow):
                     'color': color,
                     'alpha': alpha,
                     'size': size,
+                    'marker': marker,
                     'label': label
                 })
 
