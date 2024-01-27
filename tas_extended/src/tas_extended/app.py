@@ -463,8 +463,8 @@ class TAS_Extended(QMainWindow):
 
                 color = self.df['Color']
                 marker = self.df['Marker']
-                alpha = self.df['Alpha'] if 'Alpha' in self.df.columns else 0.6
-                size = self.df['Size'] if 'Size' in self.df.columns else 20
+                alpha = self.df['Alpha'] if 'Alpha' in self.df.columns else 0.8
+                size = self.df['Size'] if 'Size' in self.df.columns else 80
                 label = self.df['Label'] 
 
                 # 获取当前ax对象中的所有数据点
@@ -478,9 +478,9 @@ class TAS_Extended(QMainWindow):
                         # 根据当前透明度和数据点的数量设置新的透明度
                         if current_alpha is not None:
                             if num_points <1000:  # 如果数据点的数量大于100
-                                child.set_alpha(min(current_alpha * 2, 1))  # 提高透明度，但不超过1
+                                child.set_alpha(min(current_alpha * 2, 0.3))  # 提高透明度，但不超过1
                             elif num_points >3000:  # 如果数据点的数量小于50
-                                child.set_alpha(max(current_alpha / 2, 0.01))  # 降低透明度，但不低于0.01
+                                child.set_alpha(max(current_alpha / 2, 0.005))  # 降低透明度，但不低于0.01
 
                 def plot_group(group):
                     ax.scatter(group['x'], group['y'], c=group['color'], alpha=group['alpha'], s=group['size'], label=group.name,edgecolors='black')
