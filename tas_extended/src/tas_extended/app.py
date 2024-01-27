@@ -218,7 +218,7 @@ class TAS_Extended(QMainWindow):
 
     def init_data(self):
         self.df = pd.DataFrame()        
-        self.dpi = 64
+        self.dpi = 50
         self.tag = 'VOL'
         self.setting = 'Withlines'
         self.color_setting = ''
@@ -333,8 +333,12 @@ class TAS_Extended(QMainWindow):
 
         # 创建一个Matplotlib画布
         self.fig = Figure((10,10), dpi=self.dpi)
+
         self.canvas = FigureCanvas(self.fig)
 
+        # 设置canvas的QSizePolicy
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.canvas.setSizePolicy(sizePolicy)
         # 创建一个水平布局并添加表格视图和画布
         base_layout = QHBoxLayout()
         self.left_layout = QVBoxLayout()
@@ -348,6 +352,17 @@ class TAS_Extended(QMainWindow):
         self.main_frame.setLayout(base_layout)
         self.setCentralWidget(self.main_frame)
         self.show()
+
+    def resizeEvent(self, event):
+        # 获取窗口的新大小
+        new_width = event.size().width()
+        new_height = event.size().height()
+
+        # 设置canvas的新大小，使其始终占据窗口宽度的一半
+        self.canvas.setFixedWidth(new_width / 2)
+
+        # 调用父类的resizeEvent方法，以确保其他部件也能正确地调整大小
+        super().resizeEvent(event)
 
     def generate_polygon(self):
         self.Polygon_dict = {}
@@ -507,6 +522,8 @@ class TAS_Extended(QMainWindow):
             # print('Figure size:', fig.get_size_inches())
 
             fig.dpi=self.dpi
+            # 设置fig的尺寸为10x10
+            fig.set_size_inches(10, 10)
             self.canvas = FigureCanvas(fig)
 
             # Add the new canvas to the layout
